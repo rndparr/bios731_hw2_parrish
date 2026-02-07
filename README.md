@@ -31,7 +31,7 @@
 - here
 
 ```R
-install.packages(c("doFuture", "dorng", "foreach", "ggplot2", "here"))
+install.packages(c("doFuture", "doRNG", "foreach", "ggplot2", "here"))
 ```
 
 
