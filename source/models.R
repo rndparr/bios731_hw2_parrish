@@ -29,14 +29,19 @@ get_boot_sample <- function(sim_data) {
 }
 
 # get t_star
-bootstrap_t_inner <- function(sim_data_b, boot_beta, beta_hat) {
+bootstrap_t_inner <- function(sim_data_b, boot_beta, beta_hat, B_inner) {
 	## INNER LOOP - Bootstrap t
-	boot_beta_b <- rep(NA, B_inner)
-	for (k in 1:B_inner) {
-		sim_data_bk <- get_boot_sample(sim_data_b)
-		model_lm_k <- fit_model(sim_data_bk)
-		boot_beta_b[k] <- coef(model_lm_k)[['x']]
-	}
+	# boot_beta_b <- rep(NA, B_inner)
+	# for (k in 1:B_inner) {
+	# 	sim_data_bk <- get_boot_sample(sim_data_b)
+	# 	model_lm_k <- fit_model(sim_data_bk)
+	# 	boot_beta_b[k] <- coef(model_lm_k)[['x']]
+	# }
+	boot_beta_b <- foreach(k=1:B_inner, .combine=c) %dorng% {
+			sim_data_bk <- get_boot_sample(sim_data_b)
+			model_lm_k <- fit_model(sim_data_bk)
+			coef(model_lm_k)[['x']]	
+	}	
 	# calculate tstar
 	se_star <- sd(boot_beta_b, na.rm=TRUE)
 	t_star <- (boot_beta - beta_hat) / se_star
@@ -44,8 +49,9 @@ bootstrap_t_inner <- function(sim_data_b, boot_beta, beta_hat) {
 	return(t_star)
 }
 
+
 # get both boot_p and boot_t estimates
-get_bootstrap_estimates <- function(sim_data, beta_hat, true_beta, alpha=0.05) {
+get_bootstrap_estimates <- function(sim_data, beta_hat, true_beta, B=10, B_inner=5, alpha=0.05) {
 
 	## OUTER LOOP - Bootstrap P, t
 	seeds <- floor(runif(B, 1, 10000))
@@ -58,7 +64,7 @@ get_bootstrap_estimates <- function(sim_data, beta_hat, true_beta, alpha=0.05) {
 		boot_beta[b] <- coef(model_lm)[['x']]
 
 		# ## INNER LOOP - Bootstrap t
-		boott_time[b] <- system.time(t_star[b] <- bootstrap_t_inner(sim_data_b, boot_beta[b], beta_hat))[['elapsed']]
+		boott_time[b] <- func_time(t_star[b] <- bootstrap_t_inner(sim_data_b, boot_beta[b], beta_hat, B_inner))
 	}
 
 	# Bootstrap P results
