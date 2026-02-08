@@ -1,5 +1,3 @@
-#!/usr/bin/env Rscript
-
 
 # Rscript run_sim_i.R ${i} ${ncores}
 
@@ -50,14 +48,16 @@ source(here::here('source', 'error_funcs.R'))
 # PARAMETERS
 ###############################################################
 
-n_sim <- 475
 alpha <- 0.05
 
+n_sim <- 475
 B <- 500
 B_inner <- 100
 
 ## testing:
-# n_sim <- 20; B <- 10; B_inner <- 5; i=1; j=1
+# n_sim <- 20; B <- 10; B_inner <- 5;
+
+# i=1; j=1
 
 n_sample_vals <- c(10, 50, 500)
 true_beta_tx_vals <- c(0, 0.5, 2)
@@ -86,14 +86,17 @@ seed <- sample(1:10000, n_sim, replace=FALSE)
 
 # loop over scenarios
 # for (i in 1:nrow(params)) {
+print('Job parameters:')
+print(params[i,])
+print(paste0('B=', B, '; B_inner=', B_inner, '; alpha=', alpha))
 print(paste0('scenario ', i))
 
-out_log <- here::here('data', paste0('out_log.txt'))
+out_log <- here::here('logs', paste0('scenario_', i, 'tasks.txt'))
 # foreach combine n_sims for scenario i
 scenario_i_output <- foreach(j=1:n_sim, .combine=rbind) %dorng% {
 	# message every time start 25th sim
 	# if( (j %% 5) == 0 ) { cat(paste0('j=', j, '\n'), file=out_log, append=TRUE) }
-	cat(paste0('j=', j, '\n'), file=out_log, append=TRUE)
+	cat(paste0(j, '\n'), file=out_log, append=TRUE)
 	set.seed(seed[j])
 
 	sim_data <- do.call(get_sim_data, params[i,])
@@ -117,6 +120,8 @@ scenario_i_output <- foreach(j=1:n_sim, .combine=rbind) %dorng% {
 # save data
 scenario_i_path <- here::here('data', paste0('scenario_', i, '.Rds'))
 save(scenario_i_output, file=scenario_i_path)
+
+print('All done!')
 
 # }
 
