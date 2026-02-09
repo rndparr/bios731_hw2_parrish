@@ -85,7 +85,7 @@ sim_params <- expand.grid(
 print('Job parameters:')
 print(sim_params[i,])
 print(paste0('B=', B, '; B_inner=', B_inner, '; alpha=', alpha))
-print(paste0('scenario ', i, '\n'))
+cat(paste0('scenario ', i, '\n'))
 
 # # print session info to file
 sI <- sessionInfo()
@@ -95,7 +95,7 @@ cat()
 # create log for keeping track of j sims for running jobs
 out_log <- here::here('logs', paste0('scenario_', i, '_tasks.txt'))
 
-print(paste0('\nout_log: ', out_log))
+cat(paste0('\nout_log: ', out_log))
 
 ###############################################################
 # RUN SIMULATIONS
