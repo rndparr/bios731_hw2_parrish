@@ -94,8 +94,10 @@ cat()
 
 # create log for keeping track of j sims for running jobs
 out_log <- here::here('logs', paste0('scenario_', i, '_tasks.txt'))
+cat('j\n', file=out_log, append=FALSE)
 
 cat(paste0('\nout_log: ', out_log))
+
 
 ###############################################################
 # RUN SIMULATIONS
