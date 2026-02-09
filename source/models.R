@@ -31,7 +31,7 @@ get_boot_sample <- function(sim_data) {
 # get t_star
 bootstrap_t_inner <- function(sim_data_b, boot_beta, beta_hat, B_inner) {
 
-	boot_beta_b <- foreach(k=1:B_inner, .combine=c) %dorng% {
+	boot_beta_b <- foreach(k=1:B_inner, .combine=c, .errorhandling='remove') %dorng% {
 			sim_data_bk <- get_boot_sample(sim_data_b)
 			model_lm_k <- fit_model(sim_data_bk)
 			coef(model_lm_k)[['x']]	
@@ -50,7 +50,7 @@ get_bootstrap_estimates <- function(sim_data, beta_hat, true_beta, B=10, B_inner
 	## OUTER LOOP - Bootstrap P, t
 	seeds <- sample(1:10000, B, replace=FALSE)
 
-	boot_out <- foreach(b=1:B, .combine=rbind) %dorng% {
+	boot_out <- foreach(b=1:B, .combine=rbind, .errorhandling='remove') %dorng% {
 		set.seed(seeds[b])
 		sim_data_b <- get_boot_sample(sim_data)
 		model_lm <- fit_model(sim_data_b)

@@ -108,7 +108,7 @@ set.seed(sim_i_seed)
 seed <- sample(1:10000, n_sim, replace=FALSE)
 
 # foreach combine n_sims for scenario i
-scenario_i_output <- foreach(j=1:n_sim, .combine=rbind) %dorng% {
+scenario_i_output <- foreach(j=1:n_sim, .combine=rbind, .errorhandling='remove') %dorng% {
 
 	# output j to file
 	cat(paste0(j, '\n'), file=out_log, append=TRUE)
