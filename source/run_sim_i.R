@@ -66,7 +66,7 @@ error_dists <- setNames(
 	c('normal', 'heavy-tailed'))
 
 # simulation scenarios
-params <- expand.grid(
+sim_params <- expand.grid(
 	n_sim = 475, 
 	n = n_sample_vals,
 	beta_tx = true_beta_tx_vals,
@@ -85,7 +85,7 @@ seed <- sample(1:10000, n_sim, replace=FALSE)
 
 
 # loop over scenarios
-# for (i in 1:nrow(params)) {
+# for (i in 1:nrow(sim_params)) {
 print(paste0('scenario ', i))
 
 out_log <- here::here('data', paste0('out_log.txt'))
@@ -96,22 +96,22 @@ scenario_i_output <- foreach(j=1:n_sim, .combine=rbind) %dorng% {
 	cat(paste0('j=', j, '\n'), file=out_log, append=TRUE)
 	set.seed(seed[j])
 
-	sim_data <- do.call(get_sim_data, params[i,])
+	sim_data <- do.call(get_sim_data, sim_params[i,])
 
 	wald_time <- func_time(
-		estimates <- get_wald_estimates(sim_data, true_beta=params[i, 'beta_tx'], alpha=alpha)
+		estimates <- get_wald_estimates(sim_data, true_beta=sim_params[i, 'beta_tx'], alpha=alpha)
 	)
 
 	boot_time <- func_time(
 		boot_estimates <- get_bootstrap_estimates(sim_data, 
 			beta_hat=estimates[['beta_hat']], 
-			true_beta=params[i, 'beta_tx'],
+			true_beta=sim_params[i, 'beta_tx'],
 			B=B, B_inner=B_inner, alpha=alpha)
 	)
 
 	bootp_time <- boot_time - boot_estimates[['boott_time']]
 
-	res_j <- cbind('scenario'=i, params[i,], B, B_inner, alpha, estimates, boot_estimates, bootp_time, wald_time, boot_time, 'seed'=seed[j])
+	res_j <- cbind('scenario'=i, sim_params[i,], B, B_inner, alpha, estimates, boot_estimates, bootp_time, wald_time, boot_time, 'seed'=seed[j])
 } 
 
 # save data
@@ -124,7 +124,7 @@ save(scenario_i_output, file=scenario_i_path)
 
 # # merge data for all scenarios
 # big_data <- data.frame()
-# for (i in 1:nrow(params)) {
+# for (i in 1:nrow(sim_params)) {
 # 	scenario_i_path <- here::here('data', paste0('scenario_', i, '.Rds'))
 # 	load(scenario_i_path)
 
@@ -135,20 +135,20 @@ save(scenario_i_output, file=scenario_i_path)
 # bleh <- foreach(j=1:n_sim, .combine=rbind) %dorng% {
 # 	set.seed(seed[j])
 
-# 	sim_data <- do.call(get_sim_data, params[i,])
+# 	sim_data <- do.call(get_sim_data, sim_params[i,])
 
 # 	wald_time <- func_time(
-# 		estimates <- get_wald_estimates(sim_data, true_beta=params[i, 'beta_tx'], alpha=alpha)
+# 		estimates <- get_wald_estimates(sim_data, true_beta=sim_params[i, 'beta_tx'], alpha=alpha)
 # 	)
 
 # 	boot_time <- func_time(
 # 		boot_estimates <- get_bootstrap_estimates(sim_data, 
 # 			beta_hat=estimates[['beta_hat']], 
-# 			true_beta=params[i, 'beta_tx'],
+# 			true_beta=sim_params[i, 'beta_tx'],
 # 			B=B, B_inner=B_inner, alpha=alpha)
 # 	)
 
-# 	res_j <- cbind(params[i,], estimates, boot_estimates, wald_time, boot_time, 'seed'=seed[j])
+# 	res_j <- cbind(sim_params[i,], estimates, boot_estimates, wald_time, boot_time, 'seed'=seed[j])
 # } 
 
 
