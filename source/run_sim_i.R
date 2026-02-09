@@ -85,22 +85,25 @@ sim_params <- expand.grid(
 print('Job parameters:')
 print(sim_params[i,])
 print(paste0('B=', B, '; B_inner=', B_inner, '; alpha=', alpha))
-print(paste0('scenario ', i))
+print(paste0('scenario ', i, '\n'))
 
-# print session info to file
+# # print session info to file
 sI <- sessionInfo()
 print(sI)
+cat()
 
 # create log for keeping track of j sims for running jobs
 out_log <- here::here('logs', paste0('scenario_', i, '_tasks.txt'))
 
+print(paste0('\nout_log: ', out_log))
 
 ###############################################################
 # RUN SIMULATIONS
 ###############################################################
 
 # initial seed to generate other seeds
-set.seed(02072026 + i)
+sim_i_seed <- as.integer(02072026 + i)
+set.seed(sim_i_seed)
 
 seed <- sample(1:10000, n_sim, replace=FALSE)
 
@@ -135,7 +138,7 @@ scenario_i_output <- foreach(j=1:n_sim, .combine=rbind) %dorng% {
 
 
 	res_j <- cbind('scenario'=i, sim_params[i,], B, B_inner, alpha, estimates, boot_estimates, bootp_time, wald_time, boot_time, 'seed'=seed[j])
-
+}
 
 # save all data for scenario i
 scenario_i_path <- here::here('data', paste0('scenario_', i, '.Rds'))
