@@ -100,9 +100,9 @@ out_log <- here::here('logs', paste0('scenario_', i, '_tasks.txt'))
 ###############################################################
 
 # initial seed to generate other seeds
-set.seed(02072026)
-seed <- sample(1:10000, n_sim, replace=FALSE)
+set.seed(02072026 + i)
 
+seed <- sample(1:10000, n_sim, replace=FALSE)
 
 # foreach combine n_sims for scenario i
 scenario_i_output <- foreach(j=1:n_sim, .combine=rbind) %dorng% {
