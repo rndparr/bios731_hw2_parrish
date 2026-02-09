@@ -16,3 +16,7 @@ for (i in 1:18) {
 for (col in paste0(c('wald', 'bootp', 'boott'), '_coverage')) {
 	dat[, col] <- as.logical(dat[, col])
 }
+
+
+dat$boot_beta_hat_bias <- dat$boot_beta_hat - dat$beta_tx
+dat$beta_hat_bias <- dat$beta_hat - dat$beta_tx
