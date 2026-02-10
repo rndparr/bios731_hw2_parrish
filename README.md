@@ -69,7 +69,7 @@ A file for each scenario i is saved as `./data/scenario_${i}.Rds` and can be cop
 scp user@cluster:/full/path/to/bios731_hw2_parrish/data/scenario_${i}.Rds /local/full/path/to/bios731_hw2_parrish/data/
 ```
 
-Once all jobs are finished, run the following command to combine the data from all scenarios into a single file called `./data/all_data.Rds`.
+Once all jobs are finished, run `bash Rscript ./source/merge_data.R` in bash or `R source(here::here('source', 'merge_data.R'))` in R to combine the data from all scenarios into a single file called `./data/all_data.Rds`.
 
 ```bash
 Rscript ./source/merge_data.R
