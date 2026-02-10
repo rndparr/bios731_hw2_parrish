@@ -20,3 +20,7 @@ for (col in paste0(c('wald', 'bootp', 'boott'), '_coverage')) {
 
 dat$boot_beta_hat_bias <- dat$boot_beta_hat - dat$beta_tx
 dat$beta_hat_bias <- dat$beta_hat - dat$beta_tx
+
+
+all_data_path <- here::here('data', 'all_data.Rds')
+save(dat, file=all_data_path)
