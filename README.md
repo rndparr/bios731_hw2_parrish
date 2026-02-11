@@ -15,8 +15,41 @@
 ## Directories and Files
 
 ```
-
+.
+├── .gitignore
+├── README.md
+├── analysis
+│    ├── HW2_final_report.Rmd
+│    └── HW2_final_report.pdf
+├── bios731_hw2_parrish.Rproj
+├── data
+│    └── all_data.Rds
+├── results
+│    ├── bias-plot-1.pdf
+│    ├── ci-plot-width-1.pdf
+│    ├── ci-plots-1.pdf
+│    ├── ci-plots-2.pdf
+│    ├── ci-plots-3.pdf
+│    ├── ci-plots-4.pdf
+│    ├── ci-plots2-1.pdf
+│    ├── coverage-plot-1.pdf
+│    ├── se-plot-1.pdf
+│    └── time-plot-1.pdf
+└── source
+    ├── ci_coverage.R
+    ├── error_funcs.R
+    ├── merge_data.R
+    ├── models.R
+    ├── plot_functions.R
+    ├── run_sim_i.R
+    ├── sbatch_run_sim_i.sh
+    ├── simulate_data.R
+    ├── tables.R
+    └── utility.R
 ```
+
+
+
 
 ---
 
