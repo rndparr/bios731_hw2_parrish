@@ -1,9 +1,9 @@
 
-library(ggplot2)
-library(ggplotify) # as_ggplot()
-library(ggh4x) # facet_nested_wrap()
-library(grid)
-library(gtable)
+# library(ggplot2)
+# library(ggplotify) # as_ggplot()
+# library(ggh4x) # facet_nested_wrap()
+# library(grid)
+# library(gtable)
 
 
 
@@ -53,8 +53,6 @@ suffixes <- c('ci_lb', 'ci_ub', 'coverage', 'time')
 bias_mdat <- reshape2::melt(dat, measure.vars=c('boot_beta_hat_bias', 'beta_hat_bias'), variable.name='bias_model', value.name='bias')
 bias_mdat$bias_model <- factor(bias_mdat$bias_model, 
 	levels=c('beta_hat_bias', 'boot_beta_hat_bias'))
-
-
 
 other_cols <- c('scenario', 'j', 'n_sim', 'n', 'beta_tx', 
 	'error_dist', 'B', 'B_inner', 'alpha', 'beta_hat','se',
@@ -114,7 +112,7 @@ facet_labs <- function(p, rlab=NULL, tlab=NULL){
 
 
 ## BIAS PLOT
-bias_plot <- function(scales='fixed', ...){
+bias_plot <- function(scales='fixed', ylim=NULL, ...){
 
 	p <- ggplot(bias_mdat, 
 			aes(y=bias, x=bias_model, color=bias_model)) + 
@@ -123,7 +121,13 @@ bias_plot <- function(scales='fixed', ...){
 			position=position_dodge(.9), 
 			size=2.5, shape=18) +
 		geom_text(aes(x=-Inf, y=Inf, label=scenario),
-			size=5, color='black',hjust=-0.5, vjust=1.5) +
+			size=5, color='black',hjust=-0.5, vjust=1.5)
+
+	if(!is.null(ylim)){
+		p <- p + lims(y=ylim)
+	} 
+
+	p <- p +	
 		scale_color_manual(name='',
 			labels=c(
 				bquote(hat(beta)), bquote({hat(beta)}[p])
@@ -161,7 +165,7 @@ coverage_plot <- function(){
 	p <- ggplot(pdat, 
 		aes(model, coverage,
 			fill=model)) + 
-		geom_bar(stat='identity') +
+		geom_bar(stat='identity', width=0.5) +
 		geom_hline(yintercept=1-alpha, linetype='dashed', size=0.5) +
 		geom_text(aes(x=-Inf, y=Inf, label=scenario),
 			size=5, color='black',hjust=-0.5, vjust=1.5) +
@@ -198,7 +202,7 @@ not_coverage_plot <- function(){
 	p <- ggplot(pdat, 
 		aes(model, not_covered,
 			fill=model)) + 
-		geom_bar(stat='identity') +
+		geom_bar(stat='identity', width=0.5) +
 		geom_hline(yintercept=alpha, linetype='dashed', size=0.5) +		
 		geom_text(aes(x=-Inf, y=Inf, label=scenario),
 			size=5, color='black', hjust=-0.5, vjust=1.5) +
@@ -211,8 +215,8 @@ not_coverage_plot <- function(){
 			axis.ticks.x = element_blank(),
 			axis.title.x = element_text(color='white')) + 
 		labs(
-			title=bquote('Proportion of simulations where the 95% CI does NOT cover '*beta['tx']),
-			y='Proportion not covered',
+			title=bquote('Proportion of simulations where the 95% CI does NOT include '~beta['tx']),
+			y='Proportion',
 			caption=bquote('dashed line at '~alpha*'='*.(alpha))
 			) +
 		facet_nested(error_dist + beta_tx ~ n, 
@@ -225,28 +229,28 @@ not_coverage_plot <- function(){
 
 
 # CI PLOT
-ci_plot <- function(model, xlim=NULL, ...) {
-	# get model name
-	model_name <- model_names[[model]]
+ci_plot <- function(n, xlim=NULL, scales='fixed', ...) {
 
-	p <- ggplot(dat, 
-		aes(j, beta_hat, 
-			ymin=.data[[paste0(model, '_ci_lb')]], 
-			ymax=.data[[paste0(model, '_ci_ub')]], 
-			col=.data[[paste0(model, '_coverage')]])) +
-		geom_point(alpha=0.6, size=1) +
-		geom_errorbar(alpha=0.85, size=0.5) +
+	p <- ggplot(mdat2[mdat2$n==n, ], 
+		aes(j, beta_tx, 
+			ymin=ci_lb, 
+			ymax=ci_ub, 
+			col=coverage)) +
+		geom_point(alpha=1, size=1) +
+		geom_errorbar(alpha=0.9, size=0.5) +
 		geom_hline(aes(yintercept=beta_tx), size=0.5)+
 		geom_text(aes(x=Inf, y=-Inf, label=scenario),
-			size=5, color='black',hjust=-0.5, vjust=1.5) +
+			size=5, color='black', hjust=-0.5, vjust=1.5) +
+		guides(colour=guide_legend(
+			override.aes=list(alpha=1, size=1, stroke=1, linewidth=2))) + 
 		labs(
-			title=bquote('Coverage of 95% '~.(model_name)~'CI'),
-			color=bquote(.(model_name)~'Coverage'),
+			title=paste0('Coverage of 95% CIs for n=', n),
 			y=bquote(hat(beta)['tx']),
 			x='simulation') + 
-		facet_nested(n ~ error_dist + beta_tx, 
-			scales='free_y')
-
+		facet_nested(error_dist + beta_tx ~ model, 
+			scales=scales,
+			labeller=label_parsed
+		)
 
 	# handle x-axis limits
 	if(!is.null(xlim)){
@@ -256,10 +260,11 @@ ci_plot <- function(model, xlim=NULL, ...) {
 	}
 
 	# label facets
-	p <- facet_labs(p, 'n', bquote('Error Distribution; '*beta['tx']))
+	p <- facet_labs(p, bquote('Error Distribution::'*beta['tx']), 'method')
 
 	return(p)
 }
+
 
 
 
@@ -282,6 +287,37 @@ ci_width_plot_log <- function(scales='fixed', ...){
 			x=NULL,
 			y='log(CI Width)') + 
 		scale_y_continuous(trans='log') +
+		theme(
+			axis.text.x = element_blank(),
+			axis.ticks.x = element_blank(),
+			axis.title.x = element_text(color='white')) + 
+		facet_nested(error_dist + beta_tx ~ n, 
+			scales=scales)
+
+	p <- facet_labs(p, bquote('Error Distribution; '*beta['tx']), 'n')
+
+	return(p)
+}
+
+
+ci_width_plot <- function(scales='fixed', ...){
+
+	p <- ggplot(mdat, 
+			aes(y=ci_width, x=model, color=model)) + 
+		geom_boxplot() +
+		stat_summary(fun=mean, geom='point', 
+			position=position_dodge(.9), 
+			size=2.5, shape=18) +
+		geom_text(aes(x=-Inf, y=Inf, label=scenario),
+			size=5, color='black',hjust=-0.5, vjust=1.5) +
+		scale_color_manual(name='',
+			labels=model_names,
+			breaks=names(model_names),
+			values=c('#F8766D', '#00BA38', '#619CFF')) +
+		labs(
+			title=bquote('Width of 95% CI'),
+			x=NULL,
+			y='CI Width') + 
 		theme(
 			axis.text.x = element_blank(),
 			axis.ticks.x = element_blank(),
@@ -329,6 +365,8 @@ time_plot <- function(){
 		stat_summary(fun=mean, geom='point', 
 			position=position_dodge(.9), 
 			size=2.5, shape=18) +
+		geom_text(aes(x=-Inf, y=Inf, label=scenario),
+			size=5, color='black',hjust=-0.5, vjust=1.5) +
 		scale_color_manual(name='',
 			labels=model_names,
 			breaks=names(model_names),
@@ -340,7 +378,11 @@ time_plot <- function(){
 		theme(
 			axis.text.x = element_blank(),
 			axis.ticks.x = element_blank(),
-			axis.title.x = element_text(color='white'))
+			axis.title.x = element_text(color='white')) +
+		facet_nested(error_dist + beta_tx ~ n, 
+			scales='free_x')
+
+	p <- facet_labs(p, bquote('Error Distribution; '*beta['tx']), 'n')
 
 	return(p)
 }

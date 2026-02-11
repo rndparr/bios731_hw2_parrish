@@ -33,7 +33,7 @@ bias_table <- merge(sim_params,
 		cbind(beta_hat_bias, boot_beta_hat_bias) ~ scenario, 
 		data=dat,  FUN='mean'), 
 	by='scenario')
-colnames(bias_table) <- c('Scenario', 'n', '$\\beta_{tx}$', 'Error Distribution', 'Bias($\\hat{\\beta}$)', 'Bias($\\hat{\\beta}_{boot}$)')
+colnames(bias_table) <- c('Scenario', 'n', '$\\beta_{tx}$', 'Error Distribution', 'Mean Bias($\\hat{\\beta}$)', 'Mean Bias($\\hat{\\beta}_{boot}$)')
 # bias_header <- c()
 
 ## COVERAGE TABLE
@@ -47,7 +47,7 @@ coverage_table <- coverage_tab <- merge(sim_params,
 			data=dat,  FUN='coverage_prop'), 
 	by='scenario')
 colnames(coverage_table) <- c('Scenario', 'n', '$\\beta_{tx}$', 'Error Distribution', 'Wald CI', 'Boot p CI', 'Bootstrap-$t$ CI')
-coverage_header <- c(' ' = 4, 'Proportion of 95% CIs containing $\\\\beta_{tx}$' = 3)
+coverage_header <- c(' ' = 4, 'Proportion of 95\\\\% CIs containing $\\\\beta_{tx}$' = 3)
 
 
 ## COMP TIME TABLE

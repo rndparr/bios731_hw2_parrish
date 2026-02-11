@@ -38,6 +38,7 @@
 - kableExtra
 - reshape2
 
+
 ```R
 install.packages(c("doFuture", "dorng", "foreach", "ggplot2", "ggplotify", "ggh4x","grid", "gtable", "here", "kableExtra", "reshape2"))
 ```
