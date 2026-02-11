@@ -1,3 +1,4 @@
 ./data/*.Rds
 ./data/*.Rda
 .DS_Store
+./analysis/HW2_final_report_cache
