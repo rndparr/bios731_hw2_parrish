@@ -1,0 +1,254 @@
+---
+title: "BIOS 731: HW2"
+author: "Randy Parrish"
+date: "`r Sys.Date()`"
+format:
+  pdf:
+    colorlinks: true
+    urlcolor: blue
+    include-in-header:
+      - text: |
+          \usepackage{caption,multirow}
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+  warning = FALSE,
+  message = FALSE,
+  fig.width = 9,
+  fig.height = 8,
+  fig.path = "../results/",
+  fig.pos = "H", 
+  fig.align = "center",
+  out.extra = "",
+  #fig.cap = " ",
+  # cache = FALSE
+)
+
+
+library(kableExtra) # make tables
+library(ggplot2)
+library(ggplotify) # as_ggplot()
+library(ggh4x) # facet_nested_wrap()
+library(grid)
+library(gtable)
+
+
+# function to make the table from a data frame
+report_table <- function(data, 
+  w = NULL, h = '300px', ec = 'margin: 15px;', 
+  rownames = FALSE, header = NULL, ...)
+{
+
+  # create table object
+  tbl <- kbl(data, 
+    row.names = rownames,
+    booktabs=TRUE,
+    ...)
+
+  # add header_above
+  if (!is.null(header)) {
+    tbl <- add_header_above(tbl, header=header, escape=FALSE)
+  } 
+
+  # create the pdf table
+  tbl <- kable_paper(
+    kable_styling(tbl, 
+     # full_width = T, 
+      position = 'center',
+      fixed_thead = T,
+      latex_options = c('striped', 'hold_position','scale_down'))
+#     , 
+ # full_width = T 
+  )
+
+  # return the table
+  tbl
+}
+
+```
+
+
+---
+
+## Problem 0
+
+GitHub Repo: [https://github.com/rndparr/bios731_hw2_parrish](https://github.com/rndparr/bios731_hw2_parrish)
+
+---
+
+## Problem 1.1 ADEMP Structure
+
+- **A (Aim):** <!--What is the goal of the simulation study? -->
+  The goal is to evaluate three methods for constructing a 95\% confidence interval for $\hat{\beta}_{treatment}$.
+- **D (Data-generating mechanism):** <!--What model and distributions generate the data? What factors vary across scenarios?--> 
+  are generated from a normal distribution. Errors are generated from either a normal or $t$ distribution, depending on scenario.
+  The sample size, true treatment effect, and error distributions vary across scenarios.
+- **E (Estimand):** <!--What quantity(ies) are you trying to learn about?-->
+  We are most interested in $\beta_{treatment}$.
+- **M (Methods):** <!--What methods are being evaluated/compared?-->
+  Wald CI, Nonparametric bootstrap percentile intervals, and Nonparametric bootstrap $t$ intervals
+- **P (Performance measures):** <!--What metrics summarize performance?-->
+  The performance measures are Bias$(\hat{\beta})$, probability of coverage of the 95% CI, standard error behavior, and computation time.
+  
+- **Number of simulation scenarios:**
+   There are 18 scenarios: 3 sample sizes x 3 true treatment effects x 2 error distributions=18 scenarios.
+
+
+---
+
+## Problem 1.2 nSim
+
+Based on a desired coverage of 95\% with Monte Carlo error of no more than 1\%, 
+$$n_{sim}=\frac{\hat{cover}(1-\hat{cover})}{  \left( SE(\hat{cover})\right)^2 } =475$$
+
+
+---
+
+## Problem 1.3 Implementation
+
+The main script for conducting simulations is `./source/run_sim_i.R`. It requires 2 arguments: `i`, the scenario number; and `ncores`, the number of cores to use for parallel processing. It uses functions from these scripts located in `./source/`: `utility.R`, `simulate_data.R`, `ci_coverage.R`, `models.R`, `error_funcs.R`
+
+Due to the computational complexity, the simulation study was run on the RHPC cluster. The jobs were submitted to the cluster by submitting the `./source/sbatch_run_sim_i.sh` script to the cluster as an array job. The `doFuture`,`doRNG`, and `foreach` packages were used to parallelize jobs.
+
+
+Once the jobs were finished, I transferred the intermmediary data files for each scenario to my local computer and used `./source/merge_data.R` to combine the data contained in each into a single dataframe, saved as `./data/all_data.Rds`. An example of bash commands that can be used to submit such a job is shown in the `README.md` file.
+
+The `./analysis/HW2_final_report.Rmd` file used to generate this pdf sources `./source/tables.R` and `./source/plot_functions.R`. Plotting libraries are loaded in the latter file, which also creates a melted data frame, `mdat`, for use in some plots.
+
+
+
+
+---
+
+## Problem 1.4 Results summary {.tabset}
+<!-- - Bias of $\hat{\beta}$
+- Coverage of the **95% CI** for $\hat{\beta}$
+- Distribution of $se(\hat{\beta})$
+- Computation time across methods
+ -->
+```{r, load-data}
+# display data as knitr table
+all_data_path <- here::here('data', 'all_data.Rds')
+load(all_data_path)
+
+source(here::here('source', 'tables.R'))
+source(here::here('source', 'plot_functions.R'))
+```
+
+
+### Bias($\hat{\beta}$)
+```{r, bias-table}
+report_table(bias_table, digits=4, escape=FALSE)
+```
+
+```{r, bias-plot}
+bias_plot(ylim=c(-3.5,5))
+```
+
+\hfill\newpage
+
+
+### Coverage of the 95% CI for $\hat{\beta}$
+
+The following table shows, for all scenarios, the proportion of CIs which covered the true beta value for all models.
+
+```{r, coverage-table}
+report_table(coverage_table, header=coverage_header, digits=4, escape=FALSE)
+```
+
+The coverage for all scenarios is relatively close to the nominal coverage of 95%, so the proportion of simulations where coverage was NOT achieved was plotted in order to better visualize the differences between methods under different scenarios. The distribution of 95% CI width were also plotted. The actual confidence intervals for all simulations, grouped by $n$, are also given below.
+
+```{r, coverage-plot}
+not_coverage_plot()
+```
+
+
+```{r, ci-plot-width, eval=FALSE, echo=FALSE}
+ci_width_plot()
+```
+
+```{r, ci-plots}
+ci_width_plot_log()
+ci_plot(10)
+ci_plot(50)
+ci_plot(500)
+```
+
+### Distribution of $se(\hat{\beta})$
+
+```{r, se-plot}
+se_plot()
+```
+
+
+### Computation Time
+In the structure of the code, both the Bootstrap p and Bootstrap-$t$ are run within the same function call so that. Computation time for the combined bootstrap function is calculated and Bootstrap-$t$ is calculated within the function. The Bootstrap p time is assumed to be the combined time minus the Bootstrap-$t$ time.
+
+```{r, time-table}
+report_table(time_table, header=time_header, digits=4, escape=FALSE)
+```
+
+Based on this table, the following plot was not faceted by scenario parameters like previous plots.
+
+\newpage
+
+```{r, time-plot}
+time_plot()
+```
+
+<!-- special header to ensure hline between 1.4 and 1.5, otherwise the line is interpreted to be the end of the last sub-tab only and will not appear after other tabs -->
+## {.unlisted .unnumbered}
+
+---
+
+## Problem 1.5 Discussion
+
+<!-- Interpret the results summarized in Problem 1.4.
+
+1. Write **one paragraph** summarizing the main findings of your simulation study.
+2. Then answer the questions below:
+
+- How do the different methods for constructing confidence intervals compare in terms of computation time?
+- Which method(s) provide the best coverage when $\epsilon_i \sim N(0, 2)$?
+- Which method(s) provide the best coverage for the heavy-tailed errors?
+
+
+Finally, briefly comment on any notable interactions (e.g., how performance changes with $n$ or error type) and any practical recommendations you would make based on your results.
+ -->
+<!-- --- -->
+
+1. **Answer:**
+
+	Bias is low across all scenarios for both $\hat{\beta}$ and  $\hat{\beta}_p$. The bias of both estimates decrease as $n$ increases. Bootstrap p CIs were more computationally demanding than the Wald CIs and performed comparably, or, particularly in the case of $n=10$, worse than the other two methods. Bootstrap-$t$ CIs require considerable computational investment but performed best overall in the normal error scenarios and in the heavy-tailed error but small sample size ($n=10$) scenarios. However, this had a trade-off in that it generally had somewhat wider CIs.
+
+
+2. **Answers:**
+
+- The Wald method is the fastest by far, followed by the nonparametric Bootstrap p method. The Bootstrap $t$ method is very slow across all scenarios. Computation time was consistent across all scenarios with Wald method taking a fraction of a second, Bootstrap p taking around 30 seconds, and Bootstrap-$t$ taking around 105 seconds for $n=10,50$, with a slight bump to around the 115 seconds for $n=500$.
+
+
+- In terms of coverage, Bootstrap p performed noticably worse than the other two methods for the $n=10$ and $n=50$ scenarios but comparably for the $n=500$ scenario. 
+  
+  Overall I would say Bootstrap-$t$ had the best coverage of the methods, particularly for small sample sizes. However, the confidence intervals were much wider than that of other methods
+
+  All methods struggled somewhat with scenario 2, which had a moderate sample size ($n=50$) but no true effect ($\beta_tx=0$)–none quite hit the 95% level. 
+
+
+- At very small sample sizes ($n=10$), Bootstrap p has the worst coverage, which are also worse than the respective normal error scenarios. Wald and Bootstrap-$t$ CIs have comparible coverage at small sample size ($n=10$). All methods seem to do a bit better for $\beta_{tx}=2$ compared to the smaller values. Overall, in the heavy-tailed error scenarios the Wald CI have the best coverage. 
+
+	The plots of the actual confidence intervals show some very large outliers in the heavy-tailed error scenarios, particularly for $n=10$ and worse for the Bootstrap-$t$ CIs.
+
+
+
+The Bootstrap methods do not seem appropriate for very small sample sizes; the Bootstrap p CI has poor coverage while the Bootstrap-$t$ CI has better coverage but is much wider than other methods. Both would be computationally intensive for little benefit in these scenarios.
+
+
+
+
